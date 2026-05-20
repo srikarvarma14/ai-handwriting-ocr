@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Handwritten Text Recognition</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f9f6ff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #landing {
+            flex: 1;
+            background: url('https://tse2.mm.bing.net/th/id/OIP.7sgOjVdxhJeA5vxUt-gWUQHaEl?rs=1&pid=ImgDetMain') no-repeat center center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mainApp {
+            display: none;
+            flex: 1;
+            flex-direction: row;
+        }
+
+        #sidebar {
+            width: 250px;
+            background-color: #e6e6fa;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        #content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        button {
+            padding: 12px;
+            background-color: #6a5acd;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #5b4db7;
+        }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 20px;
+            border: 2px dashed #ccc;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: vertical;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background-color: #9370db;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing">
+        <button onclick="startApp()">Get Started</button>
+    </div>
+
+    <div id="mainApp">
+        <div id="sidebar">
+            <input type="file" id="fileInput" accept="image/*" onchange="previewImage()">
+            <button onclick="extractText()">Extract Text</button>
+        </div>
+
+        <div id="content">
+            <img id="preview" src="#" alt="Image Preview" style="display: none;">
+            <textarea id="extractedText" placeholder="Extracted text will appear here..."></textarea>
+            <button class="copy-btn" onclick="copyText()">Copy Text</button>
+        </div>
+    </div>
+
+    <script>
+        function startApp() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+        }
+
+        function previewImage() {
+            const file = document.getElementById('fileInput').files[0];
+            const preview = document.getElementById('preview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function extractText() {
+            const fileInput = document.getElementById('fileInput');
+            const textArea = document.getElementById('extractedText');
+
+            if (!fileInput.files.length) {
+                alert("Please select an image first!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    textArea.value = result.text;
+                } else {
+                    textArea.value = "Error: " + (result.error || "Something went wrong");
+                }
+            } catch (error) {
+                textArea.value = "Failed to connect to server.";
+            }
+        }
+
+        function copyText() {
+            const textArea = document.getElementById('extractedText');
+            textArea.select();
+            document.execCommand('copy');
+            alert('Text copied!');
+        }
+    </script>
+
+</body>
+</html>
